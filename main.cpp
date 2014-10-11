@@ -22,7 +22,8 @@ namespace SDL{
 
     class Error : public std::runtime_error{
         public:
-            Error():runtime_error(SDL_GetError()){}
+            static std::string Get(){ return SDL_GetError(); }
+            Error():runtime_error(Get()){}
             virtual ~Error(){}
     };
 
@@ -44,7 +45,7 @@ namespace SDL{
 
     class Application{
         public:
-            Application():Application(SDL_INIT_EVERYTHING){}
+            Application():Application(INIT::EVERYTHING){}
 
             Application(uint32_t flags){
                 if(SDL_Init(flags) != 0)
@@ -60,6 +61,18 @@ namespace SDL{
 
             void QuitSubSystem(uint32_t flags){ SDL_QuitSubSystem(flags); }
             auto WasInit(uint32_t flags){ return SDL_WasInit(flags); }
+
+            enum INIT{
+                TIMER          = SDL_INIT_TIMER,
+                AUDIO          = SDL_INIT_AUDIO,
+                VIDEO          = SDL_INIT_VIDEO,
+                JOYSTICK       = SDL_INIT_JOYSTICK,
+                HAPTIC         = SDL_INIT_HAPTIC,
+                GAMECONTROLLER = SDL_INIT_GAMECONTROLLER,
+                EVENTS         = SDL_INIT_EVENTS,
+                NOPARACHUTE    = SDL_INIT_NOPARACHUTE,
+                EVERYTHING     = SDL_INIT_EVERYTHING
+            };
     };
 
     class Window{
@@ -1101,7 +1114,7 @@ namespace SDL{
 
 int main(int argc, char** argv){
     try{
-        SDL::Application app;
+        SDL::Application app{SDL::Application::INIT::EVERYTHING};
         SDL::Window window("SDL::Test", SDL::Rect{SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 320, 240}, SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS);
         auto renderer = window.CreateRenderer(-1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE | SDL_RENDERER_PRESENTVSYNC);
 
