@@ -5,11 +5,16 @@
 #include <memory>
 #include <vector>
 #include <stdexcept>
+#include <cstdint>
 
 namespace SDL{
 
-template<typename T> class Point;
+template<typename T> class Vector2D;
+template<typename T> class Vector4D;
+typedef Vector4D<uint8_t> Color;
 typedef SDL_Rect Rect;
+typedef SDL_Point Point;
+class Application;
 class Renderer;
 class Texture;
 class Window;
@@ -33,6 +38,48 @@ class Vector2D{
             T y;
             T h;
         };
+};
+
+template<typename T>
+class Vector4D{
+    public:
+        //Point(){}
+        union {
+            T x;
+            T r;
+        };
+        union {
+            T y;
+            T g;
+        };
+        union {
+            T z;
+            T b;
+        };
+        union {
+            T w;
+            T a;
+        };
+};
+
+class Application{
+    public:
+        Application():Application(SDL_INIT_EVERYTHING){}
+
+        Application(Uint32 flags){
+           if(SDL_Init(flags) != 0)
+                throw Error();
+        }
+
+        ~Application(){ SDL_Quit(); }
+
+        void InitSubSystem(Uint32 flags){
+           if(SDL_InitSubSystem(flags) != 0)
+                throw Error();
+        }
+
+        void QuitSubSystem(Uint32 flags){ SDL_QuitSubSystem(flags); }
+        auto WasInit(Uint32 flags){ return SDL_WasInit(flags); }
 };
 
 class Window{
@@ -185,7 +232,64 @@ class Renderer{
         auto RenderTargetSupported(){return SDL_RenderTargetSupported(m_renderer);}
 
 
+        void RenderClear(){
+            if(SDL_RenderClear(m_renderer) != 0)
+                throw Error();
+        }
+
+        void RenderDrawPoint(Vector2D<int> p){RenderDrawPoint(p.x, p.y);}
+        void RenderDrawPoint(Point p){RenderDrawPoint(p.x, p.y);}
+
+        void RenderDrawPoint(int x, int y){
+            if(SDL_RenderDrawPoint(m_renderer, x, y) != 0)
+                throw Error();
+        }
+
+        void RenderDrawPoints(std::vector<Point>& points){
+            if(SDL_RenderDrawPoints(m_renderer, points.data(), points.size()) != 0)
+                throw Error();
+        }
+
+        void RenderDrawLine(Vector2D<int> p1, Vector2D<int> p2){RenderDrawLine(p1.x, p1.y, p2.x, p2.y);}
+        void RenderDrawLine(Point p1, Point p2){RenderDrawLine(p1.x, p1.y, p2.x, p2.y);}
+
+        void RenderDrawLine(int x1, int y1, int x2, int y2){
+            if(SDL_RenderDrawLine(m_renderer, x1, y1, x2, y2) != 0)
+                throw Error();
+        }
+
+        void RenderDrawLines(std::vector<Point>& points){
+            if(SDL_RenderDrawLines(m_renderer, points.data(), points.size()) != 0)
+                throw Error();
+        }
+
+        void RenderDrawRect(Rect& rect){
+            if(SDL_RenderDrawRect(m_renderer, &rect) != 0)
+                throw Error();
+        }
+ 
+        void RenderDrawRects(std::vector<Rect>& rects){
+            if(SDL_RenderDrawRects(m_renderer, rects.data(), rects.size()) != 0)
+                throw Error();
+        }
+ 
+        void RenderFillRect(Rect& rect){
+            if(SDL_RenderFillRect(m_renderer, &rect) != 0)
+                throw Error();
+        }
+
+        void RenderFillRects(std::vector<Rect>& rects){
+            if(SDL_RenderFillRects(m_renderer, rects.data(), rects.size()) != 0)
+                throw Error();
+        }
         void RenderPresent(){SDL_RenderPresent(m_renderer);}
+        void SetRenderDrawColor(Color color){SetRenderDrawColor(color.r, color.g, color.b, color.a);}
+        void SetRenderDrawColor(Color& color){SetRenderDrawColor(color.r, color.g, color.b, color.a);}
+        void SetRenderDrawColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a){
+            if(SDL_SetRenderDrawColor(m_renderer, r, g, b, a) != 0)
+                throw Error();
+        }
+
 
     private:
         SDL_Renderer* m_renderer = nullptr;
@@ -224,10 +328,6 @@ class Renderer{
 // extern DECLSPEC void SDL_RenderGetScale(SDL_Renderer * renderer,
 //                                                float *scaleX, float *scaleY);
 // 
-// extern DECLSPEC int SDL_SetRenderDrawColor(SDL_Renderer * renderer,
-//                                            Uint8 r, Uint8 g, Uint8 b,
-//                                            Uint8 a);
-// 
 // extern DECLSPEC int SDL_GetRenderDrawColor(SDL_Renderer * renderer,
 //                                            Uint8 * r, Uint8 * g, Uint8 * b,
 //                                            Uint8 * a);
@@ -238,38 +338,6 @@ class Renderer{
 // extern DECLSPEC int SDL_GetRenderDrawBlendMode(SDL_Renderer * renderer,
 //                                                        SDL_BlendMode *blendMode);
 // 
-// extern DECLSPEC int SDL_RenderClear(SDL_Renderer * renderer);
-// 
-// extern DECLSPEC int SDL_RenderDrawPoint(SDL_Renderer * renderer,
-//                                                 int x, int y);
-// 
-// extern DECLSPEC int SDL_RenderDrawPoints(SDL_Renderer * renderer,
-//                                                  const SDL_Point * points,
-//                                                  int count);
-// 
-// extern DECLSPEC int SDL_RenderDrawLine(SDL_Renderer * renderer,
-//                                                int x1, int y1, int x2, int y2);
-// 
-// extern DECLSPEC int SDL_RenderDrawLines(SDL_Renderer * renderer,
-//                                                 const SDL_Point * points,
-//                                                 int count);
-// 
-// extern DECLSPEC int SDL_RenderDrawRect(SDL_Renderer * renderer,
-//                                                const SDL_Rect * rect);
-// 
-// extern DECLSPEC int SDL_RenderDrawRects(SDL_Renderer * renderer,
-//                                                 const SDL_Rect * rects,
-//                                                 int count);
-// 
-        void RenderFillRect(Rect& rect){
-            if(SDL_RenderFillRect(m_renderer, &rect) != 0)
-                throw Error();
-        }
-
-        void RenderFillRects(std::vector<Rect>& rects){
-            if(SDL_RenderFillRects(m_renderer, rects.data(), rects.size()) != 0)
-                throw Error();
-        }
 
 // extern DECLSPEC int SDL_RenderCopy(SDL_Renderer * renderer,
 //                                            SDL_Texture * texture,
@@ -296,6 +364,11 @@ class Renderer{
 }
 
 int main(int argc, char** argv){
+    try{
+    SDL::Application app;
 
+    }catch(SDL::Error& e){
+        std::cerr << "Exception: " << e.what() << std::endl;
+    }
     return 0;
 }
