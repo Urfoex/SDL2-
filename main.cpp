@@ -4,6 +4,7 @@
 #include <utility>
 #include <memory>
 #include <vector>
+#include <stdexcept>
 
 namespace SDL{
 
@@ -12,6 +13,13 @@ typedef SDL_Rect Rect;
 class Renderer;
 class Texture;
 class Window;
+class Error;
+
+class Error : public std::runtime_error{
+    public:
+        Error():runtime_error(SDL_GetError()){}
+        virtual ~Error(){}
+};
 
 template<typename T>
 class Vector2D{
@@ -37,7 +45,7 @@ class Window{
             SDL_Renderer* renderer = nullptr;
             SDL_Window* sdlWindow = nullptr;
             if(SDL_CreateWindowAndRenderer(width, height, window_flags, &sdlWindow, &renderer) != 0)
-                throw SDL_GetError();
+                throw Error();
             else{
                 auto window = std::make_shared<Window>(sdlWindow, renderer);
                 return std::make_pair(window, window->GetRenderer());
@@ -47,7 +55,7 @@ class Window{
         auto CreateRenderer(int index, Uint32 flags){
             auto* sdlRenderer = SDL_CreateRenderer(m_window, index, flags);
             if(sdlRenderer == nullptr)
-                throw SDL_GetError();
+                throw Error();
             else{
                 m_renderer = std::make_shared<Renderer>(sdlRenderer);
                 return m_renderer;
@@ -139,13 +147,13 @@ class Renderer{
             if(numRenderDrivers >= 1)
                 return numRenderDrivers;
             else
-                throw SDL_GetError();
+                throw Error();
         }
 
         static auto GetRenderDriverInfo(int index){
             SDL_RendererInfo info;
             if( SDL_GetRenderDriverInfo(index, &info) != 0)
-                throw SDL_GetError();
+                throw Error();
             else
                 return info;
         }
@@ -153,7 +161,7 @@ class Renderer{
         auto GetRendererInfo(){
             SDL_RendererInfo info;
             if(SDL_GetRendererInfo(m_renderer, &info) != 0)
-                throw SDL_GetError();
+                throw Error();
             else
                 return info;
         }
@@ -161,7 +169,7 @@ class Renderer{
         auto GetRendererOutputSize(){
             Vector2D<int> wh;
             if(SDL_GetRendererOutputSize(m_renderer, &(wh.w), &(wh.h)) != 0)
-                throw SDL_GetError();
+                throw Error();
             else
                 return wh;
         }
@@ -169,7 +177,7 @@ class Renderer{
         auto CreateTexture(Uint32 format, int access, int w, int h){
             auto* sdlTexture = SDL_CreateTexture(m_renderer, format, access, w, h);
             if( sdlTexture == nullptr)
-                throw SDL_GetError();
+                throw Error();
             else
                 return std::make_shared<Texture>(sdlTexture);
         }
@@ -255,12 +263,12 @@ class Renderer{
 // 
         void RenderFillRect(Rect& rect){
             if(SDL_RenderFillRect(m_renderer, &rect) != 0)
-                throw SDL_GetError();
+                throw Error();
         }
 
         void RenderFillRects(std::vector<Rect>& rects){
             if(SDL_RenderFillRects(m_renderer, rects.data(), rects.size()) != 0)
-                throw SDL_GetError();
+                throw Error();
         }
 
 // extern DECLSPEC int SDL_RenderCopy(SDL_Renderer * renderer,
