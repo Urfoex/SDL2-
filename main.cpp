@@ -3,10 +3,12 @@
 #include <tuple>
 #include <utility>
 #include <memory>
+#include <vector>
 
 namespace SDL{
 
-class Point;
+template<typename T> class Point;
+typedef SDL_Rect Rect;
 class Renderer;
 class Texture;
 class Window;
@@ -65,6 +67,13 @@ class Texture{
     public:
         Texture(){/*STUB*/}
         Texture(SDL_Texture*){/*STUB*/}
+        ~Texture(){ if(m_texture != nullptr) DestroyTexture(); }
+
+        void DestroyTexture(){
+            SDL_DestroyTexture(m_texture);
+            m_texture = nullptr;
+        }
+
 
     private:
         SDL_Texture* m_texture = nullptr;
@@ -108,12 +117,22 @@ class Texture{
 // 
 // extern DECLSPEC void SDL_UnlockTexture(SDL_Texture * texture);
 // 
+// extern DECLSPEC int SDL_GL_BindTexture(SDL_Texture *texture, float *texw, float *texh);
+// 
+// extern DECLSPEC int SDL_GL_UnbindTexture(SDL_Texture *texture);
 };
 
 class Renderer{
     public:
         Renderer(){/*STUB*/}
+        ~Renderer(){ if(m_renderer != nullptr) DestroyRenderer(); }
         Renderer(SDL_Renderer*){/*STUB*/}
+
+        void DestroyRenderer(){
+            SDL_DestroyRenderer(m_renderer);
+            m_renderer = nullptr;
+        }
+
 
         static auto GetNumRenderDrivers(){
             auto numRenderDrivers = SDL_GetNumRenderDrivers();
@@ -158,6 +177,7 @@ class Renderer{
         auto RenderTargetSupported(){return SDL_RenderTargetSupported(m_renderer);}
 
 
+        void RenderPresent(){SDL_RenderPresent(m_renderer);}
 
     private:
         SDL_Renderer* m_renderer = nullptr;
@@ -233,13 +253,16 @@ class Renderer{
 //                                                 const SDL_Rect * rects,
 //                                                 int count);
 // 
-// extern DECLSPEC int SDL_RenderFillRect(SDL_Renderer * renderer,
-//                                                const SDL_Rect * rect);
-// 
-// extern DECLSPEC int SDL_RenderFillRects(SDL_Renderer * renderer,
-//                                                 const SDL_Rect * rects,
-//                                                 int count);
-// 
+        void RenderFillRect(Rect& rect){
+            if(SDL_RenderFillRect(m_renderer, &rect) != 0)
+                throw SDL_GetError();
+        }
+
+        void RenderFillRects(std::vector<Rect>& rects){
+            if(SDL_RenderFillRects(m_renderer, rects.data(), rects.size()) != 0)
+                throw SDL_GetError();
+        }
+
 // extern DECLSPEC int SDL_RenderCopy(SDL_Renderer * renderer,
 //                                            SDL_Texture * texture,
 //                                            const SDL_Rect * srcrect,
@@ -258,16 +281,8 @@ class Renderer{
 //                                                  Uint32 format,
 //                                                  void *pixels, int pitch);
 // 
-// extern DECLSPEC void SDL_RenderPresent(SDL_Renderer * renderer);
-// 
-// extern DECLSPEC void SDL_DestroyTexture(SDL_Texture * texture);
-// 
-// extern DECLSPEC void SDL_DestroyRenderer(SDL_Renderer * renderer);
-// 
-// 
-// extern DECLSPEC int SDL_GL_BindTexture(SDL_Texture *texture, float *texw, float *texh);
-// 
-// extern DECLSPEC int SDL_GL_UnbindTexture(SDL_Texture *texture);
+
+
     
 };
 }
